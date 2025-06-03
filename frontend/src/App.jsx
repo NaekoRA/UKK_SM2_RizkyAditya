@@ -8,19 +8,25 @@ import ProfilePage from "../pages/profile";
 import PrivateRoute from "../auth/private"; 
 import AdminPage from "../admin/admin";
 
+
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route element={<PrivateRoute />}>
-           <Route path="admin" element={<AdminPage />} />
+
+        <Route element={<PrivateRoute allowedRoles={['admin']} />}>
+          <Route path="/admin" element={<AdminPage />} />
+        </Route>
+
+        <Route element={<PrivateRoute allowedRoles={['user', 'admin']} />}>
           <Route path="/" element={<Sidebar />}>
             <Route index element={<Home />} />
             <Route path="profile" element={<ProfilePage />} />
           </Route>
         </Route>
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

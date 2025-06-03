@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
-const CreatePostModal = ({ show, onClose, onPostCreated }) => {
+const CreatePostModal = ({ show, onClose, onPostCreated, onRefresh }) => {
     const [texts, settexts] = useState("");
     const [mediaFile, setMediaFile] = useState(null);
+
     const token = localStorage.getItem("token");
 
-    if (!show) return null; 
+    if (!show) return null;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!token) return alert("Login dulu ya untuk buat post");
 
         try {
             const formData = new FormData();
@@ -27,17 +28,30 @@ const CreatePostModal = ({ show, onClose, onPostCreated }) => {
 
             if (res.ok) {
                 const newPost = await res.json();
-                alert("Post berhasil dibuat!");
+                Swal.fire({
+                    title: "Success!",
+                    text: "Post berhasil dibuat!",
+                    icon: "success"
+                });
                 onPostCreated(newPost);
                 settexts("");
                 setMediaFile(null);
                 onClose();
+                onRefresh(); // Panggil fungsi refresh setelah post berhasil
             } else {
-                alert("Gagal membuat post");
+                Swal.fire({
+                    title: "Error!",
+                    text: "Gagal membuat post",
+                    icon: "error"
+                });
             }
         } catch (error) {
             console.error(error);
-            alert("Error saat membuat post");
+            Swal.fire({
+                title: "Error!",
+                text: "Error saat membuat post",
+                icon: "error"
+            });
         }
     };
 
@@ -46,7 +60,7 @@ const CreatePostModal = ({ show, onClose, onPostCreated }) => {
             className="modal show"
             style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
             tabIndex="-1"
-            onClick={onClose} 
+            onClick={onClose}
         >
             <div
                 className="modal-dialog"
@@ -61,17 +75,22 @@ const CreatePostModal = ({ show, onClose, onPostCreated }) => {
                         <div className="modal-body">
                             <textarea
                                 className="form-control mb-3"
-                                placeholder="texts"
+                                placeholder="Apa yang sedang Anda pikirkan?"
                                 value={texts}
                                 onChange={(e) => settexts(e.target.value)}
                                 required
+                                rows={5}
                             />
-                            <input
-                                type="file"
-                                accept="image/*,video/*"
-                                className="form-control"
-                                onChange={(e) => setMediaFile(e.target.files[0])}
-                            />
+                            <div className="mb-3">
+                                <label htmlFor="mediaUpload" className="form-label">Upload Gambar/Video</label>
+                                <input
+                                    id="mediaUpload"
+                                    type="file"
+                                    accept="image/*,video/*"
+                                    className="form-control"
+                                    onChange={(e) => setMediaFile(e.target.files[0])}
+                                />
+                            </div>
                         </div>
                         <div className="modal-footer">
                             <button
@@ -79,10 +98,10 @@ const CreatePostModal = ({ show, onClose, onPostCreated }) => {
                                 className="btn btn-secondary"
                                 onClick={onClose}
                             >
-                                Cancel
+                                Batal
                             </button>
                             <button type="submit" className="btn btn-primary">
-                                Post
+                                Posting
                             </button>
                         </div>
                     </form>
@@ -95,10 +114,12 @@ const CreatePostModal = ({ show, onClose, onPostCreated }) => {
 const Sidebar = () => {
     const navigate = useNavigate();
     const [showCreatePost, setShowCreatePost] = useState(false);
-
+    const [refreshKey, setRefreshKey] = useState(0);
+    const role = localStorage.getItem("role");
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user_id");
+        localStorage.removeItem("role");
         navigate("/login");
     };
 
@@ -107,6 +128,14 @@ const Sidebar = () => {
 
     const handlePostCreated = (newPost) => {
         console.log("Post baru dibuat:", newPost);
+    };
+
+    const handleRefresh = () => {
+        // Pilihan 1: Refresh halaman sepenuhnya (sederhana)
+        // window.location.reload();
+
+        // Pilihan 2: Force re-render Outlet component (lebih baik)
+        setRefreshKey(prevKey => prevKey + 1);
     };
 
     return (
@@ -144,20 +173,36 @@ const Sidebar = () => {
                             Profile
                         </NavLink>
                     </li>
+                    {role === "admin" && (
+                        <li>
+                            <NavLink
+                                to="/admin"
+                                className={({ isActive }) =>
+                                    "nav-link text-white" + (isActive ? " active" : "")
+                                }
+                            >
+                                Admin Page
+                            </NavLink>
+                        </li>
+                    )}
                     <li>
                         <button
                             onClick={handleOpenCreatePost}
                             className="nav-link text-white btn btn-link text-start p-0"
+                            style={{ width: "100%" }}
                         >
-                            <p>&nbsp;&nbsp;&nbsp;Create Post</p>
+                            <i className="bi bi-plus-circle me-2"></i>
+                            &nbsp;&nbsp;Create Post <br />
                         </button>
                     </li>
                     <li>
                         <button
                             onClick={handleLogout}
                             className="nav-link text-white btn btn-link text-start p-0"
+                            style={{ width: "100%" }}
                         >
-                            &nbsp;&nbsp;&nbsp;Logout
+                            <i className="bi bi-box-arrow-left me-2"></i>
+                            &nbsp;&nbsp;Logout
                         </button>
                     </li>
                 </ul>
@@ -167,13 +212,14 @@ const Sidebar = () => {
                 className="flex-grow-1 p-3"
                 style={{ overflowY: "auto", height: "100vh" }}
             >
-                <Outlet />
+                <Outlet key={refreshKey} />
             </div>
 
             <CreatePostModal
                 show={showCreatePost}
                 onClose={handleCloseCreatePost}
                 onPostCreated={handlePostCreated}
+                onRefresh={handleRefresh}
             />
         </div>
     );

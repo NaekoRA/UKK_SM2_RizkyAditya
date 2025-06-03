@@ -33,10 +33,11 @@ const getUserByid = (req, res) => {
 }
 
 const register = (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role = "user" } = req.body;
   if (!username || !email || !password) return res.status(400).json({ message: "Data tidak lengkap" });
   const hashedPassword = bcrypt.hashSync(password, 10);
-  user.insertUser(username, email, hashedPassword, (err, results) => {
+
+  user.insertUser(username, email, hashedPassword, role, (err, results) => {
     if (err) {
       if (err.code === "ER_DUP_ENTRY") {
         return res.status(409).json({ message: "email sudah digunakan" });
@@ -46,6 +47,7 @@ const register = (req, res) => {
     res.status(201).json({ message: "User berhasil didaftarkan", userId: results.insertId });
   });
 };
+
 const updateUser = (req, res) => {
   const idUser = req.user.id;
   const { bio } = req.body;
@@ -60,13 +62,14 @@ const updateUser = (req, res) => {
 const login = (req, res) => {
   const { email, password } = req.body
   user.seleactUserByEmail(email, (err, results) => {
-    if (err) return res.status(407).json({ message: 'error login' })
+    if (err) return res.status(500).json({ message: 'error login' })
     if (results.length === 0) return res.status(404).json({ message: 'user tidak ada' })
     const user = results[0]
     const validpassword = bcrypt.compareSync(password, user.password)
     if (!validpassword) return res.status(400).json({ message: 'password salah' })
-    const token = jwt.sign({ id: user.id }, 'admin#123', { expiresIn: 86400 })
-    res.status(202).json({ auth: true, token, id: user.id })
+    const token = jwt.sign({ id: user.id, role: user.role }, 'admin#123', { expiresIn: 86400 })
+    res.status(202).json({ auth: true, token, id: user.id, role: user.role })
+
 
   })
 }
@@ -74,11 +77,11 @@ const login = (req, res) => {
 const deleteUser = (req, res) => {
   const idUser = req.params.idUser;
   user.deleteUser(idUser, (err, results) => {
-    if (err) return res.status(500).json({ message: 'error delete' ,err}); 
+    if (err) return res.status(500).json({ message: 'error delete', err });
     if (results.affectedRows === 0)
-      return res.status(404).json({ message: 'user tidak ditemukan' }); 
+      return res.status(404).json({ message: 'user tidak ditemukan' });
 
-    res.json({ message: 'berhasil di hapus' }); 
+    res.json({ message: 'berhasil di hapus' });
   });
 };
 

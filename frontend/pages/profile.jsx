@@ -135,7 +135,7 @@ const ProfilePage = () => {
     if (!user) return <p>Loading...</p>;
 
     return (
-        <div className="container mt-4">
+        <div className="container mt-4 Full">
             <h2>Profile Saya</h2>
 
             <div className="mb-3">

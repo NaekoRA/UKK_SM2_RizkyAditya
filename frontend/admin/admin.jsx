@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
-import '../src/adit.css'
+import { useNavigate } from 'react-router-dom';
+import '../src/adit.css';
+
 const AdminPage = () => {
   const [users, setUsers] = useState([]);
   const [file, setFile] = useState(null);
+  const navigate = useNavigate();
 
   const fetchUsers = async () => {
     try {
@@ -66,9 +69,14 @@ const AdminPage = () => {
 
   return (
     <div className="container bg-dark text-white py-4 min-vh-100 admin">
+      <div className="mb-3">
+        <button className="btn btn-outline-light" onClick={() => navigate('/')}>
+          ← Kembali ke Beranda
+        </button>
+      </div>
+
       <h3 className="text-center mb-4">👑 Admin Panel</h3>
 
-      {/* Upload Excel */}
       <form onSubmit={handleUpload} className="mb-4">
         <div className="input-group">
           <input
@@ -83,13 +91,13 @@ const AdminPage = () => {
         </div>
       </form>
 
-      {/* Table User */}
       <table className="table table-dark table-bordered text-center">
         <thead className="table-light text-dark">
           <tr>
             <th>ID</th>
             <th>Username</th>
             <th>Email</th>
+            <th>Role</th>
             <th>Aksi</th>
           </tr>
         </thead>
@@ -100,6 +108,7 @@ const AdminPage = () => {
                 <td>{user.id}</td>
                 <td>{user.username}</td>
                 <td>{user.email}</td>
+                <td>{user.role}</td>
                 <td>
                   <button
                     className="btn btn-sm btn-danger"

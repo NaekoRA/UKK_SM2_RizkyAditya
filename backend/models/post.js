@@ -1,4 +1,4 @@
-const db = require('../models/db')
+const db = require('../models/db');
 
 const getPostsByUserId = (userId, callback) => {
     db.query(`
@@ -6,57 +6,70 @@ const getPostsByUserId = (userId, callback) => {
             posts.*,
             users.username,
             users.avatar,
-            users.bio
+            users.bio,
+            (SELECT COUNT(*) FROM votes WHERE post_id = posts.id AND type = 'upvote') AS upvotes,
+            (SELECT COUNT(*) FROM votes WHERE post_id = posts.id AND type = 'downvote') AS downvotes
         FROM posts
         INNER JOIN users ON posts.user_id = users.id
         WHERE posts.user_id = ?
         ORDER BY posts.created_at DESC
     `, [userId], callback);
 };
+
 const gettAllPost = (callback) => {
     db.query(`
         SELECT 
             posts.*,
             users.username,
             users.avatar,
-            users.bio
+            users.bio,
+            (SELECT COUNT(*) FROM votes WHERE post_id = posts.id AND type = 'upvote') AS upvotes,
+            (SELECT COUNT(*) FROM votes WHERE post_id = posts.id AND type = 'downvote') AS downvotes
         FROM posts
         INNER JOIN users ON posts.user_id = users.id
         ORDER BY posts.created_at DESC
-        `, callback)
-}
+    `, callback);
+};
 
 const gettPostById = (id, callback) => {
     db.query(`
         SELECT
-        posts.*,
-        users.username,
-        users.avatar,
-        users.bio
+            posts.*,
+            users.username,
+            users.avatar,
+            users.bio,
+            (SELECT COUNT(*) FROM votes WHERE post_id = posts.id AND type = 'upvote') AS upvotes,
+            (SELECT COUNT(*) FROM votes WHERE post_id = posts.id AND type = 'downvote') AS downvotes
         FROM posts
         INNER JOIN users ON posts.user_id = users.id
         WHERE posts.id = ?
-        `, [id], callback)
-}
-const insertPost = (texts, media, idUser, callback) => {
-    db.query("INSERT INTO posts (texts, media, user_id)values(?,?,?)",
-        [texts, media, idUser],
-        callback
-    )
+    `, [id], callback);
+};
 
-}
-const updatePost = (idUser, texts, media, callback) => {
-    db.query("UPDATE posts SET texts = ?, media = ? WHERE id = ?",
+const insertPost = (texts, media, idUser, callback) => {
+    db.query(
+        "INSERT INTO posts (texts, media, user_id) VALUES (?, ?, ?)",
         [texts, media, idUser],
         callback
-    )
-}
+    );
+};
+
+const updatePost = (id, texts, media, callback) => {
+    db.query(
+        "UPDATE posts SET texts = ?, media = ? WHERE id = ?",
+        [texts, media, id],
+        callback
+    );
+};
+
 const deletePost = (id, callback) => {
-    db.query("DELETE FROM posts WHERE id = ?",
+    db.query(
+        "DELETE FROM posts WHERE id = ?",
         [id],
         callback
-    )
-}
+    );
+};
+
 module.exports = {
     gettAllPost,
     gettPostById,
@@ -64,5 +77,4 @@ module.exports = {
     updatePost,
     deletePost,
     getPostsByUserId
-}
-
+};

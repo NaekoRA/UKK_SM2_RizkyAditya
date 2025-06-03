@@ -13,14 +13,15 @@ const seleactUserByEmail = (email, callback) => {
     koneksi.query(q, [email], callback)
 }
 
-const insertUser = (username, email, password, callback) => {
+const insertUser = (username, email, password, role, callback) => {
     if (password) {
-        const q = 'INSERT INTO users (username,email,password) VALUES (?,?,?)'
-        koneksi.query(q,[username,email,password],callback)
+        const q = 'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)';
+        koneksi.query(q, [username, email, password, role], callback);
     } else {
         console.error('password harus di isi');
     }
 }
+
 const updateUser = (idUser, bio, avatar, callback) => {
     const q = 'UPDATE users SET bio = ?, avatar = ? WHERE id = ?'
     koneksi.query(q, [bio, avatar, idUser], callback)
